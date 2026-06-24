@@ -2,9 +2,10 @@ rm(list=ls())
 
 library(rvest)
 library(naniar)
+library(tidyverse)
 
 from = "2017-01-01"
-to = "2018-09-13"
+to = "2017-01-13"
 
 s <- seq(as.Date(from), as.Date(to), "days")
 url <- "https://finance.yahoo.com/calendar/ipo?from="
@@ -14,20 +15,25 @@ store <- NULL
 tbl <- NULL
 
 for(i in links){
-  store[[i]] = read_html(i)
-  tbl[[i]] = html_table(store[[i]])
+  store[[i]] = read_html(i) %>% 
+    html_nodes("table") %>%
+    html_nodes("td") %>%
+    html_text()
+  
+  tbl[[i]] = as.data.frame(matrix(store[[i]], ncol=9, byrow=TRUE))
 }
 
 
-list <- unlist(tbl, recursive = FALSE)
-df <- do.call("rbind", list)
-df <- df %>%
-  replace_with_na_all(condition = ~.x == "-")
+# list <- unlist(tbl, recursive = FALSE)
+# df <- do.call("rbind", list)
+df <- bind_rows(tbl)
+# df <- df %>%
+#   replace_with_na_all(condition = ~.x == "-")
 
-data <- df[!is.na(df$Price), ]
+# data <- df[!is.na(df$Price), ]
 
 
-library(tidyverse)
+# library(tidyverse)
 
 # US <- df %>%
 #   filter(str_detect(Exchange, c("NYSE", "Nasdaq")))
